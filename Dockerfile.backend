@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
+COPY personal.py .
+
+# Create directory for CSV files
+RUN mkdir -p /app/data
+
+# Set the working directory as a volume
+VOLUME /app/data
+
+# Run the script when a CSV file is added to the data directory
+CMD ["python", "personal.py"] 
