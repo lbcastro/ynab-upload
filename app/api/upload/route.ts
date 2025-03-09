@@ -20,12 +20,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await writeFile(filePath, buffer);
 
     // Run the Python script with the specific file
-    const pythonProcess = spawn('python3', [path.join(process.cwd(), 'personal.py'), filePath], {
-      env: {
-        ...process.env,
-        PYTHONUNBUFFERED: '1'
-      }
-    });
+    const pythonProcess = spawn('python3', [path.join(process.cwd(), 'personal.py'), filePath]);
 
     let stdout = '';
     let stderr = '';
