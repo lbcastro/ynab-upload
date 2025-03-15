@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+.venv
+.DS_Store
+*.csv
+data/*
+!data/.gitkeep 

@@ -4,14 +4,17 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PYTHON_API_URL=http://python-backend:5001
     volumes:
-      - ./data:/app/data
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
     depends_on:
       - python-backend
     env_file:
@@ -29,6 +32,8 @@ services:
       - ./data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
       - FLASK_PORT=5001
       - VERIFY_SSL=false
     env_file:

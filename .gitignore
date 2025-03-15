@@ -1,58 +1,81 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
-
-# Testing
-coverage/
-
-# Next.js
-.next/
-out/
-
-# Production
-build/
-dist/
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
 .venv/
 venv/
 ENV/
+env/
 
-# Debug
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+.cache/
+.npm
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Local env files
-.env
-.env*.local
-
-# Vercel
-.vercel
-
 # TypeScript
 *.tsbuildinfo
-next-env.d.ts
 
-# Project specific
-data/
-*.csv
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# OS specific
-.DS_Store
-Thumbs.db
-.directory
-Desktop.ini
+# Docker
+.docker/
 
-# IDE specific
+# IDE / Editors
 .idea/
 .vscode/
 *.swp
 *.swo
-*~ 
+*~
+.DS_Store
+
+# Project specific
+data/*.csv
+*.csv
+!example.csv
+
+# Logs
+logs/
+*.log
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 

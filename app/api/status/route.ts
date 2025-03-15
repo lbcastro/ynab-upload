@@ -1,25 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-    
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-    }
-
     // Get the Python API URL from environment variables or use a default
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://localhost:5000';
     
-    // Create a new FormData object to send to the Python API
-    const apiFormData = new FormData();
-    apiFormData.append('file', file);
-
-    // Send the file to the Python API
-    const response = await fetch(`${pythonApiUrl}/api/process`, {
-      method: 'POST',
-      body: apiFormData,
+    // Send a request to the Python API status endpoint
+    const response = await fetch(`${pythonApiUrl}/api/status`, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
     });
 
     // Get the response from the Python API
@@ -28,7 +19,7 @@ export async function POST(req: NextRequest) {
     // Return the response with the appropriate status code
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('Status check error:', error);
     return NextResponse.json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'

@@ -1,0 +1,18 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy the Python script and requirements
+COPY personal.py app.py requirements.txt ./
+
+# Install Python dependencies
+RUN pip install -r requirements.txt
+
+# Make sure personal.py is executable
+RUN chmod +x personal.py
+
+# Expose the port for the Flask app
+EXPOSE 5001
+
+# Run the Flask app
+CMD ["python", "app.py"] 

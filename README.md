@@ -9,7 +9,8 @@ A modern web application for importing bank transactions into YNAB (You Need A B
 - 🌙 Dark/light theme support
 - 📊 Real-time import status
 - 🔁 Automatic retry handling
-- 📱 Responsive design
+- �� Responsive design
+- 🐳 Docker support for easy deployment
 
 ## Setup
 
@@ -18,6 +19,7 @@ A modern web application for importing bank transactions into YNAB (You Need A B
 - Python 3.x
 - Node.js 16+
 - YNAB account with API access
+- Docker and Docker Compose (optional)
 
 ### Environment Variables
 
@@ -29,8 +31,11 @@ YNAB_SHARED_ACCOUNT_ID=account-id
 YNAB_LOUISE_ACCOUNT_ID=account-id
 ```
 
-### Installation
+## Usage
 
+### Standard Method
+
+1. Install dependencies:
 ```bash
 # Backend
 pip install -r requirements.txt
@@ -39,14 +44,26 @@ pip install -r requirements.txt
 npm install
 ```
 
-## Usage
-
-1. Start the development server:
+2. Start the development server:
 ```bash
 npm run dev
 ```
 
-2. Upload CSV files through the web interface at `http://localhost:3000`
+3. Upload CSV files through the web interface at `http://localhost:3000`
+
+### Using Docker Compose
+
+1. For development:
+```bash
+docker compose -f docker-compose.dev.yml up
+```
+
+2. For production:
+```bash
+docker compose up
+```
+
+3. Access the web interface at `http://localhost:3000`
 
 ## CSV Format
 

@@ -8,31 +8,17 @@ import random
 import requests
 import time
 import sys
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Get environment variables or use defaults
+BUDGET_ID = os.environ.get("YNAB_BUDGET_ID", "fbe718d1-38d7-4f6c-8b84-7a42d2dcb163")
+ACCESS_TOKEN = os.environ.get("YNAB_ACCESS_TOKEN", "e009c83231f6ce314e0cf29f8dc6a9e4f9cb774e6d7eba18c18b5c6b3a82f722")
+LOURENCO_ACCOUNT_ID = os.environ.get("YNAB_LOURENCO_ACCOUNT_ID", "25fbb6be-2671-428d-9e68-ffca65db77d2")
+SHARED_ACCOUNT_ID = os.environ.get("YNAB_SHARED_ACCOUNT_ID", "028b9d22-2dcd-4dce-ac93-2f64045d45c2")
+LOUISE_ACCOUNT_ID = os.environ.get("YNAB_LOUISE_ACCOUNT_ID", "eec1ab52-afff-4077-82d8-9a61ddf0e0ca")
 
-# Get configuration from environment variables
-BUDGET_ID = os.getenv("YNAB_BUDGET_ID")
-ACCESS_TOKEN = os.getenv("YNAB_ACCESS_TOKEN")
-LOURENCO_ACCOUNT_ID = os.getenv("YNAB_LOURENCO_ACCOUNT_ID")
-SHARED_ACCOUNT_ID = os.getenv("YNAB_SHARED_ACCOUNT_ID")
-LOUISE_ACCOUNT_ID = os.getenv("YNAB_LOUISE_ACCOUNT_ID")
-
-# Validate required environment variables
-required_vars = [
-    "YNAB_BUDGET_ID",
-    "YNAB_ACCESS_TOKEN",
-    "YNAB_LOURENCO_ACCOUNT_ID",
-    "YNAB_SHARED_ACCOUNT_ID",
-    "YNAB_LOUISE_ACCOUNT_ID"
-]
-
-missing_vars = [var for var in required_vars if not os.getenv(var)]
-if missing_vars:
-    print("Error: Missing required environment variables:", ", ".join(missing_vars))
-    sys.exit(1)
+# For testing in Docker, disable SSL verification
+# WARNING: This is not secure for production use
+VERIFY_SSL = os.environ.get("VERIFY_SSL", "true").lower() == "true"
 
 def parse_danish_amount(amount_str):
     """Convert Danish number format (1.234,56) to float."""
@@ -103,7 +89,8 @@ def push_to_ynab(transaction, budget_id, account_id, access_token, retry_count=5
         }
 
         try:
-            response = requests.post(url, headers=headers, json=data)
+            # Disable SSL verification for testing in Docker
+            response = requests.post(url, headers=headers, json=data, verify=VERIFY_SSL)
             
             if response.status_code == 201:
                 success = True
@@ -152,39 +139,46 @@ def read_transaction(
     return transaction
 
 def main(input_file, budget_id=None, account_id=None, access_token=None):
+    print(f"Processing file: {input_file}")
+    
     if not os.path.exists(input_file):
         print(f"File not found: {input_file}")
         return
 
-    with codecs.open(input_file, encoding="latin1") as fin:
-        header_line = fin.readline().rstrip()
-        fields = [s.strip('"') for s in header_line.split(";")]
-        if fields != ["Date", "Text", "Amount", "Balance", "Status", "Reconciled"]:
-            print(fields)
-            raise ValueError("Downloaded CSV file has incorrect header line.")
+    try:
+        with codecs.open(input_file, encoding="latin1") as fin:
+            header_line = fin.readline().rstrip()
+            fields = [s.strip('"') for s in header_line.split(";")]
+            if fields != ["Date", "Text", "Amount", "Balance", "Status", "Reconciled"]:
+                print(f"Unexpected header fields: {fields}")
+                raise ValueError("Downloaded CSV file has incorrect header line.")
 
-        transactions = []
-        for line in fin:
-            transaction = read_transaction(line)
-            if transaction is not None:
-                transactions.append(transaction)
+            transactions = []
+            for line in fin:
+                transaction = read_transaction(line)
+                if transaction is not None:
+                    transactions.append(transaction)
 
-        for i, transaction in enumerate(transactions):
-            if "1.50% af DKK" in transaction.payee:
-                matching_transaction = next(
-                    (t for t in transactions[:i] if t.date == transaction.date and f"{t.flow:.2f}" in transaction.payee), None
-                )
-                if matching_transaction:
-                    transaction.payee = matching_transaction.payee
-                    transaction.memo = "Foreign transaction fee"
+            for i, transaction in enumerate(transactions):
+                if "1.50% af DKK" in transaction.payee:
+                    matching_transaction = next(
+                        (t for t in transactions[:i] if t.date == transaction.date and f"{t.flow:.2f}" in transaction.payee), None
+                    )
+                    if matching_transaction:
+                        transaction.payee = matching_transaction.payee
+                        transaction.memo = "Foreign transaction fee"
 
-            if not transaction.cleared:
-                push_to_ynab(transaction, budget_id, account_id, access_token)
-                # Add a small delay between transactions to avoid rate limits
-                time.sleep(1)
+                if not transaction.cleared:
+                    push_to_ynab(transaction, budget_id, account_id, access_token)
+                    # Add a small delay between transactions to avoid rate limits
+                    time.sleep(1)
 
-    os.remove(input_file)
-    print(f"Deleted file: {input_file}")
+        # Only delete the file if processing was successful
+        os.remove(input_file)
+        print(f"Deleted file: {input_file}")
+    except Exception as e:
+        print(f"Error processing file: {str(e)}")
+        raise
 
 def find_input_files():
     lourenco_files = glob.glob("Lourenco-*-*.csv")
@@ -198,10 +192,17 @@ if __name__ == "__main__":
         sys.exit(1)
     
     input_file = sys.argv[1]
-    if input_file.startswith("Sharedexpenses-"):
+    print(f"Input file: {input_file}")
+    
+    if "Shared" in input_file:
         account_id = SHARED_ACCOUNT_ID
-    elif input_file.startswith("Louise-"):
+    elif "Louise" in input_file:
         account_id = LOUISE_ACCOUNT_ID
     else:
         account_id = LOURENCO_ACCOUNT_ID
-    main(input_file, budget_id=BUDGET_ID, account_id=account_id, access_token=ACCESS_TOKEN)
+    
+    try:
+        main(input_file, budget_id=BUDGET_ID, account_id=account_id, access_token=ACCESS_TOKEN)
+    except Exception as e:
+        print(f"Error in main function: {str(e)}")
+        sys.exit(1)
