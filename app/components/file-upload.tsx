@@ -279,7 +279,7 @@ export function FileUpload({ onUpload }: FileUploadProps) {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch('/api/upload', {
+        const response = await fetch('/api/process', {
           method: 'POST',
           body: formData
         });
